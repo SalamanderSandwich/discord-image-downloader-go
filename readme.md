@@ -25,7 +25,7 @@ This is a simple tool which downloads pictures (and instagram videos) posted in 
 Download golang for your computer https://golang.org/dl/
 ```
 cd PATH_TO_DIR
-go get .
+go get -d .
 go build .
 ```
 Then follow these steps:
