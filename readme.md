@@ -22,6 +22,7 @@ This is a simple tool which downloads pictures (and instagram videos) posted in 
 - Any direct link to an image or video
 
 ## How to use?
+Download golang for your computer https://golang.org/dl/
 ```
 cd PATH_TO_DIR
 go get .
