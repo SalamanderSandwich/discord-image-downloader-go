@@ -16,6 +16,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+    "mvdan.cc/xurls"
 
 	"github.com/HouzuoGuo/tiedot/db"
 	"github.com/Jeffail/gabs"
@@ -24,7 +25,6 @@ import (
 	"github.com/dghubble/go-twitter/twitter"
 	"github.com/dghubble/oauth1"
 	"github.com/hashicorp/go-version"
-	"github.com/mvdan/xurls"
 	"golang.org/x/net/context"
 	"golang.org/x/net/html"
 	"golang.org/x/oauth2/google"
@@ -70,7 +70,7 @@ var (
 )
 
 const (
-	VERSION                          string = "1.27"
+	VERSION                          string = "1.26.1"
 	DATABASE_DIR                     string = "database"
 	RELEASE_URL                      string = "https://github.com/Seklfreak/discord-image-downloader-go/releases/latest"
 	RELEASE_API_URL                  string = "https://api.github.com/repos/Seklfreak/discord-image-downloader-go/releases/latest"
@@ -319,9 +319,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 }
 
 func messageUpdate(s *discordgo.Session, m *discordgo.MessageUpdate) {
-	if m.EditedTimestamp != discordgo.Timestamp("") {
-		handleDiscordMessage(m.Message)
-	}
+	handleDiscordMessage(m.Message)
 }
 
 func getDownloadLinks(url string, channelID string, interactive bool) map[string]string {
@@ -484,7 +482,7 @@ func handleDiscordMessage(m *discordgo.Message) {
 		for _, iAttachment := range m.Attachments {
 			startDownload(iAttachment.URL, iAttachment.Filename, folderName, m.ChannelID, m.Author.ID, fileTime)
 		}
-		foundUrls := xurls.Strict.FindAllString(m.Content, -1)
+		foundUrls := xurls.Strict().FindAllString(m.Content, -1)
 		for _, iFoundUrl := range foundUrls {
 			links := getDownloadLinks(iFoundUrl, m.ChannelID, false)
 			for link, filename := range links {
@@ -493,10 +491,6 @@ func handleDiscordMessage(m *discordgo.Message) {
 		}
 		if m.Embeds != nil && len(m.Embeds) > 0 {
 			for _, embed := range m.Embeds {
-				if embed.Provider != nil {
-					// skip preview official embeds to prevent duplictes
-					continue
-				}
 				if embed.URL != "" {
 					links := getDownloadLinks(embed.URL, m.ChannelID, false)
 					for link, filename := range links {
@@ -504,24 +498,12 @@ func handleDiscordMessage(m *discordgo.Message) {
 					}
 				}
 				if embed.Description != "" {
-					foundUrls := xurls.Strict.FindAllString(embed.Description, -1)
+					foundUrls := xurls.Strict().FindAllString(embed.Description, -1)
 					for _, iFoundUrl := range foundUrls {
 						links := getDownloadLinks(iFoundUrl, m.ChannelID, false)
 						for link, filename := range links {
 							startDownload(link, filename, folderName, m.ChannelID, m.Author.ID, fileTime)
 						}
-					}
-				}
-				if embed.Image != nil && embed.Image.URL != "" {
-					links := getDownloadLinks(embed.Image.URL, m.ChannelID, false)
-					for link, filename := range links {
-						startDownload(link, filename, folderName, m.ChannelID, m.Author.ID, fileTime)
-					}
-				}
-				if embed.Video != nil && embed.Video.URL != "" {
-					links := getDownloadLinks(embed.Video.URL, m.ChannelID, false)
-					for link, filename := range links {
-						startDownload(link, filename, folderName, m.ChannelID, m.Author.ID, fileTime)
 					}
 				}
 			}
@@ -694,7 +676,7 @@ func handleDiscordMessage(m *discordgo.Message) {
 											startDownload(iAttachment.URL, iAttachment.Filename, folder, message.ChannelID, message.Author.ID, fileTime)
 										}
 									}
-									foundUrls := xurls.Strict.FindAllString(message.Content, -1)
+									foundUrls := xurls.Strict().FindAllString(message.Content, -1)
 									for _, iFoundUrl := range foundUrls {
 										links := getDownloadLinks(iFoundUrl, message.ChannelID, false)
 										for link, filename := range links {
@@ -761,7 +743,7 @@ func handleDiscordMessage(m *discordgo.Message) {
 						interactiveChannelLinkTemp[m.ChannelID] = iAttachment.URL
 						foundLinks = true
 					}
-					foundUrls := xurls.Strict.FindAllString(m.Content, -1)
+					foundUrls := xurls.Strict().FindAllString(m.Content, -1)
 					for _, iFoundUrl := range foundUrls {
 						dg.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Where do you want to save <%s>?\nType **.** for default path or **cancel** to cancel the download %s", iFoundUrl, folderName))
 						interactiveChannelLinkTemp[m.ChannelID] = iFoundUrl
